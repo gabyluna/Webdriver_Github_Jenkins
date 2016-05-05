@@ -1,78 +1,65 @@
-/**
- * Created by usuario on 05/05/2016.
- */
-import java.util.regex.Pattern;
-import java.util.concurrent.TimeUnit;
-import org.junit.*;
-import static org.junit.Assert.*;
-import static org.hamcrest.CoreMatchers.*;
-import org.openqa.selenium.*;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
-import org.openqa.selenium.support.ui.Select;
+import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import static org.junit.Assert.assertTrue;
+
+@RunWith(Parameterized.class)
 public class imdbTest {
-    private WebDriver driver;
-    private String baseUrl;
-    private boolean acceptNextAlert = true;
-    private StringBuffer verificationErrors = new StringBuffer();
+    private static WebDriver driver;
+    private static String baseUrl;
 
-    @Before
-    public void setUp() throws Exception {
-        driver = new FirefoxDriver();
+    private String searchTerm;
+
+    @Parameterized.Parameters(name = "Movie {index}: {0}")
+    public static Collection movieTitles() {
+        ArrayList<String> res = new ArrayList();
+        res.add("Blade Runner");
+        res.add("One from the Heart");
+        res.add("The Big Lebowski");
+        res.add("Groundhog Day");
+        res.add("Before Sunrise");
+
+        return res;
+    }
+
+    public imdbTest(String searchTerm) {
+        this.searchTerm = searchTerm;
+    }
+
+    @BeforeClass
+    public static void setUp() throws Exception {
+        Logger.getLogger("").setLevel(Level.OFF);
+        driver = new HtmlUnitDriver();
         baseUrl = "http://www.imdb.com/";
         driver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
     }
 
     @Test
-    public void testImdb() throws Exception {
-        driver.get(baseUrl + "/");
-        String searchTerm = "star wars";
+    public void testImdbSearch() throws Exception {
+        driver.get(baseUrl);
+        driver.findElement(By.id("navbar-query")).click();
         driver.findElement(By.id("navbar-query")).clear();
         driver.findElement(By.id("navbar-query")).sendKeys(searchTerm);
         driver.findElement(By.id("navbar-submit-button")).click();
         driver.findElement(By.xpath("//td[2]/a")).click();
-        assertTrue(driver.getTitle().matches("^regexpi:\\.[\\s\\S]*\\$\\{searchTerm\\}\\.[\\s\\S]*$"));
+        assertTrue(driver.getTitle().matches(".*" + searchTerm + ".*"));
     }
 
-    @After
-    public void tearDown() throws Exception {
+    @AfterClass
+    public static void tearDown() throws Exception {
         driver.quit();
-        String verificationErrorString = verificationErrors.toString();
-        if (!"".equals(verificationErrorString)) {
-            fail(verificationErrorString);
-        }
-    }
-
-    private boolean isElementPresent(By by) {
-        try {
-            driver.findElement(by);
-            return true;
-        } catch (NoSuchElementException e) {
-            return false;
-        }
-    }
-
-    private boolean isAlertPresent() {
-        try {
-            driver.switchTo().alert();
-            return true;
-        } catch (NoAlertPresentException e) {
-            return false;
-        }
-    }
-
-    private String closeAlertAndGetItsText() {
-        try {
-            Alert alert = driver.switchTo().alert();
-            String alertText = alert.getText();
-            if (acceptNextAlert) {
-                alert.accept();
-            } else {
-                alert.dismiss();
-            }
-            return alertText;
-        } finally {
-            acceptNextAlert = true;
-        }
     }
 }
